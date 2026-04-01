@@ -1,9 +1,23 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- <meta http-equiv="refresh" content="0; URL=''" /> -->
+    <style>
+      #time {
+        font-size: 70px;   /* 大きくする */
+        font-weight: bold;
+        text-align: center;
+        margin-top: 20%;
+      }
+    </style>
   </head>
   <body>
-    <p>redirectしません</p>
+    <div id="time"></div>
+
+    <script>
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+
+      document.getElementById("time").textContent = timeString;
+    </script>
   </body>
 </html>
