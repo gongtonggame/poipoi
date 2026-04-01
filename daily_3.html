@@ -2,22 +2,44 @@
 <html>
   <head>
     <style>
-      #time {
-        font-size: 70px;   /* 大きくする */
-        font-weight: bold;
+      body {
+        background-color: black;
+        color: white;
         text-align: center;
-        margin-top: 20%;
+        font-family: sans-serif;
+      }
+
+      #date {
+        font-size: 80px;
+        margin-top: 15%;
+      }
+
+      #time {
+        font-size: 80px;
+        font-weight: bold;
       }
     </style>
   </head>
   <body>
+    <div id="date"></div>
     <div id="time"></div>
 
     <script>
-      const now = new Date();
-      const timeString = now.toLocaleTimeString();
+      function updateDateTime() {
+        const now = new Date();
 
-      document.getElementById("time").textContent = timeString;
+        const date = now.getFullYear() + "年" +
+                     (now.getMonth() + 1) + "月" +
+                     now.getDate() + "日";
+
+        const time = now.toLocaleTimeString();
+
+        document.getElementById("date").textContent = date;
+        document.getElementById("time").textContent = time;
+      }
+
+      setInterval(updateDateTime, 1000);
+      updateDateTime();
     </script>
   </body>
 </html>
