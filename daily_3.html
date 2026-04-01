@@ -9,37 +9,26 @@
         font-family: sans-serif;
       }
 
-      #date {
-        font-size: 80px;
-        margin-top: 15%;
-      }
-
-      #time {
-        font-size: 80px;
+      #datetime {
+        font-size: 60px;
         font-weight: bold;
+        margin-top: 20%;
       }
     </style>
   </head>
   <body>
-    <div id="date"></div>
-    <div id="time"></div>
+    <div id="datetime"></div>
 
     <script>
-      function updateDateTime() {
-        const now = new Date();
+      const now = new Date();
 
-        const date = now.getFullYear() + "年" +
-                     (now.getMonth() + 1) + "月" +
-                     now.getDate() + "日";
+      const formatted =
+        now.getFullYear() + "年" +
+        (now.getMonth() + 1) + "月" +
+        now.getDate() + "日 " +
+        now.toLocaleTimeString();
 
-        const time = now.toLocaleTimeString();
-
-        document.getElementById("date").textContent = date;
-        document.getElementById("time").textContent = time;
-      }
-
-      setInterval(updateDateTime, 1000);
-      updateDateTime();
+      document.getElementById("datetime").textContent = formatted;
     </script>
   </body>
 </html>
