@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加速ポイント計算ツール</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #d1d5db;
+    --accent: #2563eb;
+    --good: #15803d;
+    --bad: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111827;
+      --card: #1f2937;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --border: #374151;
+      --accent: #60a5fa;
+      --good: #4ade80;
+      --bad: #f87171;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+  h1 { margin: 0 0 8px; font-size: 26px; }
+  .desc { margin: 0 0 20px; color: var(--muted); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  input {
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text);
+    font-size: 16px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 10px;
+  }
+  button {
+    min-height: 44px;
+    border: 0;
+    border-radius: 9px;
+    padding: 9px 14px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .add { background: var(--accent); color: white; }
+  .remove {
+    background: transparent;
+    color: var(--bad);
+    border: 1px solid var(--border);
+  }
+  .results {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .metric {
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 14px;
+  }
+  .metric .name { color: var(--muted); font-size: 13px; }
+  .metric .value { font-size: 24px; font-weight: 700; margin-top: 3px; word-break: break-word; }
+  .status {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 11px;
+    border: 1px solid var(--border);
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .good { color: var(--good); }
+  .bad { color: var(--bad); }
+  .small { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+    .results { grid-template-columns: 1fr; }
+    .row { grid-template-columns: 1fr 1fr auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>加速ポイント計算ツール</h1>
+  <p class="desc">持っている加速アイテムを全部使った場合のポイントと、目標までの不足・超過を計算します。</p>
+
+  <section class="card">
+    <div class="grid">
+      <div>
+        <label for="current">現在のポイント</label>
+        <input id="current" type="number" min="0" step="1" value="1083020">
+      </div>
+      <div>
+        <label for="target">目標ポイント</label>
+        <input id="target" type="number" min="0" step="1" value="2166040">
+      </div>
+      <div>
+        <label for="rate">1分あたりのポイント</label>
+        <input id="rate" type="number" min="0" step="1" value="60">
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;">
+      <strong>持っている加速</strong>
+      <button type="button" class="add" id="addRow">＋ 種類を追加</button>
+    </div>
+    <div id="items"></div>
+    <div class="small">例：1分加速を360個なら「1分」「360個」と入力します。</div>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <div class="results">
+      <div class="metric">
+        <div class="name">合計加速時間</div>
+        <div class="value" id="totalMinutes">0分</div>
+      </div>
+      <div class="metric">
+        <div class="name">加速で獲得できるポイント</div>
+        <div class="value" id="earned">0pt</div>
+      </div>
+      <div class="metric">
+        <div class="name">全部使った後のポイント</div>
+        <div class="value" id="after">0pt</div>
+      </div>
+      <div class="metric">
+        <div class="name">目標までに必要な加速時間</div>
+        <div class="value" id="neededTime">0分</div>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const root = document;
+  const items = root.getElementById('items');
+  const current = root.getElementById('current');
+  const target = root.getElementById('target');
+  const rate = root.getElementById('rate');
+
+  const fmt = n => Math.round(n).toLocaleString('ja-JP');
+  const positive = el => Math.max(0, Number(el.value) || 0);
+
+  function formatTime(minutes) {
+    minutes = Math.max(0, Math.ceil(minutes));
+    const days = Math.floor(minutes / 1440);
+    const hours = Math.floor((minutes % 1440) / 60);
+    const mins = minutes % 60;
+    const parts = [];
+    if (days) parts.push(days + '日');
+    if (hours) parts.push(hours + '時間');
+    if (mins || parts.length === 0) parts.push(mins + '分');
+    return parts.join(' ');
+  }
+
+  function addRow(minutes = 1, count = 0) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <div>
+        <label>加速時間（分）</label>
+        <input class="minutes" type="number" min="0" step="1" value="${minutes}">
+      </div>
+      <div>
+        <label>個数</label>
+        <input class="count" type="number" min="0" step="1" value="${count}">
+      </div>
+      <button type="button" class="remove" aria-label="この種類を削除">削除</button>
+    `;
+    row.querySelectorAll('input').forEach(el => el.addEventListener('input', calculate));
+    row.querySelector('.remove').addEventListener('click', () => {
+      row.remove();
+      calculate();
+    });
+    items.appendChild(row);
+    calculate();
+  }
+
+  function calculate() {
+    const cur = positive(current);
+    const tar = positive(target);
+    const perMin = positive(rate);
+
+    let totalMin = 0;
+    items.querySelectorAll('.row').forEach(row => {
+      const mins = Math.max(0, Number(row.querySelector('.minutes').value) || 0);
+      const count = Math.max(0, Number(row.querySelector('.count').value) || 0);
+      totalMin += mins * count;
+    });
+
+    const earned = totalMin * perMin;
+    const after = cur + earned;
+    const diff = after - tar;
+
+    root.getElementById('totalMinutes').textContent =
+      fmt(totalMin) + '分（' + formatTime(totalMin) + '）';
+    root.getElementById('earned').textContent = fmt(earned) + 'pt';
+    root.getElementById('after').textContent = fmt(after) + 'pt';
+
+    const baseShortage = Math.max(0, tar - cur);
+    const neededMinutes = perMin > 0 ? Math.ceil(baseShortage / perMin) : 0;
+    root.getElementById('neededTime').textContent =
+      perMin > 0 ? fmt(neededMinutes) + '分（' + formatTime(neededMinutes) + '）' : '計算不可';
+
+    const status = root.getElementById('status');
+    if (diff >= 0) {
+      status.className = 'status good';
+      status.textContent = '目標達成：' + fmt(diff) + 'pt 余ります';
+    } else {
+      const shortage = Math.abs(diff);
+      const extraMinutes = perMin > 0 ? Math.ceil(shortage / perMin) : 0;
+      status.className = 'status bad';
+      status.textContent = 'あと ' + fmt(shortage) + 'pt 不足（追加で約 ' +
+        fmt(extraMinutes) + '分 / ' + formatTime(extraMinutes) + ' の加速が必要）';
+    }
+  }
+
+  root.getElementById('addRow').addEventListener('click', () => addRow(1, 0));
+  [current, target, rate].forEach(el => el.addEventListener('input', calculate));
+
+  addRow(1, 360);
+  addRow(5, 300);
+})();
+</script>
+</body>
+</html>
